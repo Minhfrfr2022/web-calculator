@@ -2,16 +2,17 @@ const display = document.getElementById("display");
 const expressionDisplay = document.getElementById("expression");
 
 let memory = 0;
-let isMemorySet = false; // Biến kiểm tra xem có gì trong bộ nhớ không (kể cả số 0)
-let angleMode = "deg"; // Mặc định là Degree (Độ), các giá trị: deg, rad, grad
-let isNewCalculation = false; // Biến kiểm soát khi nhập số mới sau khi tính
-let currentMode = "standard"; // Theo dõi chế độ hiện tại
-let isSecondFunc = false; // Trạng thái nút 2nd
-let isFE = false; // Trạng thái hiển thị F-E (Fixed-Exponent)
-let isHyp = false; // Trạng thái nút Hyperbolic
-let currentBase = 10; // Cơ số hiện tại cho Programmer Mode (10, 16, 8, 2)
-let currentWordSize = 64; // Word size hiện tại cho Programmer Mode (32 hoặc 64)
+let isMemorySet = false;
+let angleMode = "deg";
+let isNewCalculation = false;
+let currentMode = "standard";
+let isSecondFunc = false;
+let isFE = false;
+let isHyp = false;
+let currentBase = 10;
+let currentWordSize = 64;
 const WORD_LABELS = { 64: "QWORD", 32: "DWORD", 16 : "WORD", 8: "BYTE" };
+
 // --- LOGIC MENU & SWITCH MODE ---
 
 function toggleMenu() {
@@ -19,70 +20,61 @@ function toggleMenu() {
     document.getElementById("overlay").classList.toggle("active");
 }
 
-// Toggle menu Trigonometry
 function toggleTrigMenu() {
     const menu = document.getElementById("trig-dropdown");
     menu.classList.toggle("active");
 }
 
-// Toggle menu Function
 function toggleFuncMenu() {
     const menu = document.getElementById("func-dropdown");
-    // Đóng menu Trig nếu đang mở
     document.getElementById("trig-dropdown").classList.remove("active");
     menu.classList.toggle("active");
 }
 
 function switchMode(mode, element) {
     currentMode = mode;
-    // 1. Cập nhật UI Menu
     document.querySelectorAll(".menu-item").forEach(item => item.classList.remove("active"));
     if(element) element.classList.add("active");
 
-    // 2. Ẩn tất cả các grid
     ["standard", "scientific", "programmer", "date", "graphing"].forEach(m => {
         const el = document.getElementById(`mode-${m}`);
         if (el) el.style.display = "none";
     });
 
-    // Ẩn thanh công cụ khoa học và đóng menu dropdown mặc định
     const tb = document.getElementById("sci-toolbar");
     if (tb) tb.style.display = "none";
     document.getElementById("trig-dropdown").classList.remove("active");
     document.getElementById("func-dropdown").classList.remove("active");
 
-    // 3. Xử lý logic từng mode
     const calc = document.getElementById("calculator");
     const title = document.getElementById("mode-title");
 
     if (mode === "standard") {
         document.getElementById("mode-standard").style.display = "grid";
-        calc.classList.remove("wide-mode"); // Thu nhỏ
+        calc.classList.remove("wide-mode");
         title.innerText = "Standard";
     } 
     else if (mode === "scientific") {
         document.getElementById("mode-scientific").style.display = "grid";
         document.getElementById("sci-toolbar").style.display = "flex";
-        calc.classList.add("wide-mode"); // Phình to
+        calc.classList.add("wide-mode");
         title.innerText = "Scientific";
 
-        // Cập nhật trạng thái nút Deg/Rad/Grad cho đúng với biến angleMode
         const btn = document.getElementById("btn-deg");
         const labels = { "deg": "DEG", "rad": "RAD", "grad": "GRAD" };
         if (btn) btn.innerText = labels[angleMode] || "DEG";
     }
     else if (mode === "programmer") {
-        document.getElementById("mode-programmer").style.display = "block"; // Block vì chứa flex con
+        document.getElementById("mode-programmer").style.display = "block";
         calc.classList.add("wide-mode");
         title.innerText = "Programmer";
-        setBase(10); // Reset về DEC
+        setBase(10);
         updateProgrammerDisplay();
     }
     else if (mode === "date") {
         document.getElementById("mode-date").style.display = "flex";
         calc.classList.remove("wide-mode");
         title.innerText = "Date Calculation";
-        // Set default dates
         document.getElementById("date-from").valueAsDate = new Date();
         document.getElementById("date-to").valueAsDate = new Date();
     }
@@ -90,39 +82,33 @@ function switchMode(mode, element) {
         document.getElementById("mode-graphing").style.display = "flex";
         calc.classList.add("wide-mode");
         title.innerText = "Graphing";
-        drawGraph(); // Vẽ mẫu
+        drawGraph();
     }
     else {
         calc.classList.remove("wide-mode");
     }
 
-    // 4. Reset màn hình khi đổi chế độ
     clearDisplay();
     
-    // Reset trạng thái 2nd nếu đang bật để tránh lỗi hiển thị
     if (isSecondFunc) {
         toggleSecondFunc();
     }
     if (isHyp) {
         toggleHyp();
     }
-    toggleMenu(); // Đóng menu
+    toggleMenu();
 }
 
 // --- LOGIC MÁY TÍNH ---
 
 function appendToDisplay(value) {
     if (currentMode === "programmer") {
-        // Nếu là toán tử thì cho phép nhập luôn, không cần kiểm tra giới hạn số
         const operators = ["+", "-", "×", "÷", "%", "(", ")", "<<", ">>", "&", "|", "^", "~"];
         if (operators.includes(value)) {
-            // Fall through để append bình thường
         } else {
             if (value === ".") return;
             
-            // Lấy số cuối cùng đang nhập để kiểm tra giới hạn
             let potentialText = (display.innerText === "0" || isNewCalculation) ? value : display.innerText + value;
-            // Tách theo các toán tử để lấy token cuối cùng
             let parts = potentialText.split(/[\+\-\×\÷\%\(\)\<\>\&\|\^\~]/);
             let currentNumStr = parts[parts.length - 1];
 
@@ -131,12 +117,10 @@ function appendToDisplay(value) {
                     let nextVal = 0n;
                     if(currentBase === 10){
                         nextVal = BigInt(currentNumStr);
-                        // Decimal là Signed Integer
                         let max = (1n << (BigInt(currentWordSize) - 1n)) - 1n; 
                         let min = -(1n << (BigInt(currentWordSize) - 1n));
                         if (nextVal > max || nextVal < min) return;
                     } else {
-                        // Hex/Oct/Bin là Unsigned (Bits)
                         let prefix = currentBase === 16 ? "0x" : (currentBase === 8 ? "0o" : "0b");
                         nextVal = BigInt(prefix + currentNumStr);
                         let max = (1n << BigInt(currentWordSize)) - 1n; 
@@ -149,15 +133,12 @@ function appendToDisplay(value) {
     }
     if (display.innerText === "0" || display.innerText === "Error" || isNewCalculation) {
         
-        // Nếu đang lỗi mà bấm dấu chấm (.) thì đổi thành "0."
         if (value === "." && display.innerText === "Error") {
             display.innerText = "0.";
         } 
-        // Logic cũ cho dấu chấm
         else if (value === "." && !isNewCalculation) {
             display.innerText += value;
         } 
-        // Nhập số bình thường -> Xóa Error đi thay bằng số mới
         else {
             display.innerText = value;
         }
@@ -203,11 +184,10 @@ function backspace() {
 function toggleSign() {
     if (display.innerText === "Error") return;
     
-    // Nếu đang là biểu thức (vd: 5+5), hãy tính toán trước khi đổi dấu
     if (!isFinite(display.innerText)) {
         calculate();
     }
-    if(currentMode === "programmer" && currentBase !== 10) return; // Không cho đổi dấu trong Programmer mode nếu không phải DEC{
+    if(currentMode === "programmer" && currentBase !== 10) return;
 
     if(display.innerText.startsWith("-")) 
         display.innerText = display.innerText.substring(1);
@@ -215,13 +195,10 @@ function toggleSign() {
         display.innerText = "-" + display.innerText;
 }
 
-// Hàm tính toán nâng cao
-// Helper: Nếu màn hình đang là biểu thức (vd: "5+5"), hãy tính nó trước khi áp dụng hàm
 function ensureResultBeforeMath() {
     if (!isFinite(display.innerText)) {
         calculate();
     }
-    // Nếu sau khi tính mà vẫn lỗi thì trả về false
     return display.innerText !== "Error";
 }
 
@@ -245,6 +222,7 @@ function calculateInverse() {
 }
 
 // --- CÁC HÀM CHO CHẾ ĐỘ 2nd ---
+
 function calculateCube() {
     if (!ensureResultBeforeMath()) return;
     let v = parseFloat(display.innerText);
@@ -254,7 +232,7 @@ function calculateCube() {
 function calculateCbrt() {
     if (!ensureResultBeforeMath()) return;
     let v = parseFloat(display.innerText);
-    display.innerText = (v < 0) ? -Math.pow(-v, 1/3) : Math.pow(v, 1/3); // Xử lý căn bậc 3 số âm
+    display.innerText = (v < 0) ? -Math.pow(-v, 1/3) : Math.pow(v, 1/3);
     isNewCalculation = true;
 }
 function calculateTwoPowX() {
@@ -268,11 +246,10 @@ function calculate() {
     try {
         let raw = display.innerText;
 
-        // Hàm hỗ trợ tính toán lượng giác theo Deg/Rad
         const toRad = (val) => {
             if (angleMode === "deg") return val * Math.PI / 180;
             if (angleMode === "grad") return val * Math.PI / 200;
-            return val; // rad
+            return val;
         };
 
         const fromRad = (val) => {
@@ -281,7 +258,6 @@ function calculate() {
             return val;
         };
         
-        // Định nghĩa các hàm cục bộ để eval sử dụng
         const sin = (x) => Math.sin(toRad(x));
         const cos = (x) => Math.cos(toRad(x));
         const tan = (x) => Math.tan(toRad(x));
@@ -292,8 +268,6 @@ function calculate() {
         const floor = (x) => Math.floor(x);
         const ceil = (x) => Math.ceil(x);
         
-        // Hàm chuyển đổi DMS (Degree Minute Second)
-        // Ví dụ: 12.5 -> 12.30 (12 độ 30 phút)
         const dms = (x) => {
             let sign = Math.sign(x);
             x = Math.abs(x);
@@ -302,8 +276,7 @@ function calculate() {
             let s = ((x - d) * 60 - m) * 60;
             return sign * (d + m/100 + s/10000); 
         };
-        // Hàm chuyển đổi DEG (Decimal Degree)
-        // Ví dụ: 12.30 -> 12.5
+
         const deg = (x) => {
             let sign = Math.sign(x);
             x = Math.abs(x);
@@ -313,21 +286,18 @@ function calculate() {
             return sign * (d + m/60 + s/3600);
         };
 
-        // Hàm lượng giác ngược (kết quả trả về radian -> cần convert sang deg/grad)
         const asin = (x) => fromRad(Math.asin(x));
         const acos = (x) => fromRad(Math.acos(x));
         const atan = (x) => fromRad(Math.atan(x));
-        const asec = (x) => fromRad(Math.acos(1/x)); // sec-1(x) = cos-1(1/x)
+        const asec = (x) => fromRad(Math.acos(1/x));
         const acsc = (x) => fromRad(Math.asin(1/x));
         const acot = (x) => fromRad(Math.atan(1/x));
 
-        // Hàm Hyperbolic (không phụ thuộc deg/rad)
         const sinh = (x) => Math.sinh(x);
         const cosh = (x) => Math.cosh(x);
         const tanh = (x) => Math.tanh(x);
         const sech = (x) => 1 / Math.cosh(x);
 
-        // Hàm Hyperbolic ngược
         const asinh = (x) => Math.asinh(x);
         const acosh = (x) => Math.acosh(x);
         const atanh = (x) => Math.atanh(x);
@@ -335,25 +305,18 @@ function calculate() {
         const acsch = (x) => Math.asinh(1/x);
         const acoth = (x) => Math.atanh(1/x);
 
-        // Hàm thường khác
         const sec = (x) => 1 / Math.cos(toRad(x));
         const csc = (x) => 1 / Math.sin(toRad(x));
         const cot = (x) => 1 / Math.tan(toRad(x));
         
-        // Thay thế ký tự toán học thành JS code
-        // Lưu ý: Thay thế chuỗi dài trước (asinh) để tránh bị replace nhầm (sin)
         let expr = raw.replace(/÷/g, "/")
                       .replace(/×/g, "*")
                       .replace(/\^/g, "**")
                       .replace(/π/g, "Math.PI")
-                      .replace(/𝑒/g, "Math.E") // Thay thế ký tự e in nghiêng thành hằng số
-                      // KHÔNG replace chữ 'e' thường nữa để tránh lỗi với ceil, sec, exp...
-                      // Hyperbolic & Inverse Hyperbolic
+                      .replace(/𝑒/g, "Math.E")
                       .replace(/asinh\(/g, "asinh(").replace(/acosh\(/g, "acosh(").replace(/atanh\(/g, "atanh(").replace(/asech\(/g, "asech(").replace(/acsch\(/g, "acsch(").replace(/acoth\(/g, "acoth(")
                       .replace(/sinh\(/g, "sinh(").replace(/cosh\(/g, "cosh(").replace(/tanh\(/g, "tanh(").replace(/sech\(/g, "sech(").replace(/csch\(/g, "csch(").replace(/coth\(/g, "coth(")
-                      // Inverse Trig
                       .replace(/asin\(/g, "asin(").replace(/acos\(/g, "acos(").replace(/atan\(/g, "atan(").replace(/asec\(/g, "asec(").replace(/acsc\(/g, "acsc(").replace(/acot\(/g, "acot(")
-                      // Standard Trig
                       .replace(/sin\(/g, "sin(")
                       .replace(/cos\(/g, "cos(")
                       .replace(/tan\(/g, "tan(")
@@ -368,23 +331,14 @@ function calculate() {
                       .replace(/ceil\(/g, "ceil(")
                       .replace(/dms\(/g, "dms(")
                       .replace(/deg\(/g, "deg(")
-                      // Xử lý random
                       .replace(/rand/g, "Math.random()")
-                      // Xử lý custom operators cho 2nd mode
-                      // yroot: 8 yroot 3 -> Math.pow(8, 1/3)
                       .replace(/(\d+(?:\.\d+)?) yroot (\d+(?:\.\d+)?)/g, "Math.pow($1, 1/$2)")
-                      // logbase: 8 logbase 2 -> Math.log(8)/Math.log(2)
                       .replace(/(\d+(?:\.\d+)?) logbase (\d+(?:\.\d+)?)/g, "(Math.log($1)/Math.log($2))");
 
 
-        // Xử lý phần trăm (%) trước: 50% -> 50/100
         expr = expr.replace(/%/g, "/100");
-
-        // Xử lý mod (chia lấy dư)
-        // Sau khi xử lý %, ta mới đổi mod thành % (toán tử JS)
         expr = expr.replace(/mod/g, "%");
 
-        // Tự động đóng ngoặc nếu thiếu
         const openParens = (expr.match(/\(/g) || []).length;
         const closeParens = (expr.match(/\)/g) || []).length;
         if (openParens > closeParens) {
@@ -395,18 +349,13 @@ function calculate() {
         if (currentMode === "scientific") {
             result = eval(expr);
         } else if (currentMode === "programmer") {
-            // Xử lý riêng cho Programmer: Dùng eval với BigInt để hỗ trợ Bitwise (<<, >>, &, |...)
-            // Tách chuỗi theo các toán tử để chèn 'n' vào sau số (tạo BigInt literal)
-            // Regex: Tách giữ lại các toán tử: <<, >> hoặc các ký tự đơn + - * / % ( ) & | ^ ~
             let parts = expr.split(/(<<|>>|[+\-*\/%()&|^~])/);
             
             let processedExpr = parts.map(part => {
                 let p = part.trim();
                 if (!p) return "";
-                // Nếu là toán tử thì giữ nguyên
                 if (/^(<<|>>|[+\-*\/%()&|^~])$/.test(p)) return p;
                 
-                // Nếu là số, thêm 'n' và prefix (0x, 0o, 0b) nếu cần
                 try {
                     if (currentBase === 10) return p + "n";
                     else {
@@ -424,14 +373,11 @@ function calculate() {
         if (!isFinite(result)) {
             display.innerText = "Error";
         } else {
-            // Làm tròn kết quả nếu quá dài
             let finalRes = parseFloat(result.toPrecision(12));
             
-            // Kiểm tra chế độ F-E
             if (isFE) {
                 display.innerText = finalRes.toExponential();
             } else {
-                // Chế độ Fixed: Cố gắng hiển thị dạng số thường cho số nhỏ (tránh 1e-7)
                 if (Math.abs(finalRes) < 1e-6 && finalRes !== 0) {
                     display.innerText = finalRes.toFixed(20).replace(/\.?0+$/, "");
                 } else {
@@ -439,14 +385,14 @@ function calculate() {
                 }
             }
 
-            isNewCalculation = true; // Đánh dấu đã tính xong
+            isNewCalculation = true;
             
             addToHistory(raw, finalRes);
 
             if (currentMode === "programmer") {
                 try {
                     let bigRes = BigInt(finalRes);
-                    bigRes = BigInt.asIntN(currentWordSize, bigRes); // Áp dụng giới hạn word size  
+                    bigRes = BigInt.asIntN(currentWordSize, bigRes);
                     display.innerText = bigRes.toString(currentBase).toUpperCase();
                 }catch(e) {}
                 updateProgrammerDisplay();
@@ -457,7 +403,6 @@ function calculate() {
     }
 }
 
-// Hàm tính toán từ trái sang phải cho Standard Mode
 function evaluateStandard(expr) {
     let tokens = [];
     let currentNumber = "";
@@ -466,9 +411,7 @@ function evaluateStandard(expr) {
         let char = expr[i];
         
         if (char === 'n' && currentMode === 'programmer') continue; 
-        // Thêm các ký tự toán tử hiển thị trên màn hình (×, ÷)
         if ("+*/%×÷".includes(char)) {
-            // Xử lý số mũ (Scientific Notation: 1e+5)
             if (char === '+' && (currentNumber.endsWith("e") || currentNumber.endsWith("E"))) {
                 currentNumber += char;
                 continue;
@@ -476,7 +419,6 @@ function evaluateStandard(expr) {
             
             if (currentNumber !== "") {
                 if(currentMode === 'programmer'){
-                    // Parse BigInt theo base hiện tại
                     if (currentBase === 10) tokens.push(BigInt(currentNumber));
                     else {
                         let prefix = currentBase === 16 ? "0x" : (currentBase === 8 ? "0o" : "0b");
@@ -490,13 +432,11 @@ function evaluateStandard(expr) {
             tokens.push(char);
         } 
         else if (char === "-") {
-            // Xử lý số mũ (Scientific Notation: 1e-5)
             if (currentNumber.endsWith("e") || currentNumber.endsWith("E")) {
                 currentNumber += char;
                 continue;
             }
             
-            // Dấu âm: nếu là đầu chuỗi hoặc sau toán tử khác thì là số âm
             if (currentNumber === "") {
                 currentNumber += char;
             } else {
@@ -535,7 +475,6 @@ function evaluateStandard(expr) {
     for (let i = 1; i < tokens.length; i += 2) {
         let op = tokens[i];
         let val = tokens[i+1];
-        // if (isNaN(val)) return NaN; // BigInt không check isNaN
         
         if (op === '+') result += val;
         else if (op === '-') result -= val;
@@ -549,7 +488,6 @@ function evaluateStandard(expr) {
 // --- LOGIC MEMORY (MC, MR, M+, M-, MS) ---
 
 function updateMemoryButtons() {
-    // Nếu memory khác 0 thì enable nút MC và MR
     const hasMemory = isMemorySet;
     document.getElementById("btn-mc").disabled = !hasMemory;
     document.getElementById("btn-mr").disabled = !hasMemory;
@@ -566,8 +504,7 @@ function memoryClear() {
 
 function memoryRecall() {
     display.innerText = memory;
-    isNewCalculation = true; // Để khi bấm số tiếp theo sẽ nhập mới
-    // Đóng panel nếu đang mở để tiện nhìn kết quả
+    isNewCalculation = true;
     document.getElementById("memory-panel").classList.remove("active");
 }
 
@@ -617,7 +554,6 @@ function toggleSecondFunc() {
     const btn2nd = document.getElementById("btn-2nd");
     const btnTrig2nd = document.getElementById("btn-trig-2nd");
     
-    // Các nút cần thay đổi
     const btnSquare = document.getElementById("btn-square");
     const btnSqrt = document.getElementById("btn-sqrt");
     const btnPower = document.getElementById("btn-power");
@@ -625,7 +561,7 @@ function toggleSecondFunc() {
     const btnLog = document.getElementById("btn-log");
     const btnLn = document.getElementById("btn-ln");
 
-    updateTrigButtons(); // Cập nhật nhãn các nút sin/cos/tan
+    updateTrigButtons();
 
     if (isSecondFunc) {
         btn2nd.style.backgroundColor = "#0067c0";
@@ -635,7 +571,6 @@ function toggleSecondFunc() {
             btnTrig2nd.style.color = "white";
         }
 
-        // Thay đổi giao diện và chức năng
         btnSquare.innerHTML = "x<sup>3</sup>";
         btnSquare.onclick = calculateCube;
 
@@ -661,7 +596,6 @@ function toggleSecondFunc() {
             btnTrig2nd.style.color = "";
         }
 
-        // Trả về mặc định
         btnSquare.innerHTML = "x²";
         btnSquare.onclick = calculateSquare;
 
@@ -689,7 +623,7 @@ function toggleHyp() {
     if (isHyp) {
         btnHyp.style.backgroundColor = "#0067c0";
         btnHyp.style.color = "white";
-        btnHyp.innerText = "hyp"; // Giữ nguyên text
+        btnHyp.innerText = "hyp";
     } else {
         btnHyp.style.backgroundColor = "";
         btnHyp.style.color = "";
@@ -724,29 +658,24 @@ function updateTrigButtons() {
 function trigFunc(type) {
     let funcName = type;
     
-    // Xác định tên hàm dựa trên trạng thái 2nd và Hyp
     if (isHyp) {
-        funcName += "h"; // sin -> sinh
+        funcName += "h";
     }
     if (isSecondFunc) {
-        // Nếu là inverse (2nd), thêm 'a' vào trước. 
-        // Vd: sin -> asin, sinh -> asinh
         funcName = "a" + funcName;
     }
     
     appendToDisplay(funcName + "(");
     
-    // Đóng menu sau khi chọn
     document.getElementById("trig-dropdown").classList.remove("active");
 }
 
 function mathFunc(type) {
     if (type === 'rand') {
-        appendToDisplay(type); // rand không cần dấu ngoặc
+        appendToDisplay(type);
     } else {
         appendToDisplay(type + "(");
     }
-    // Đóng menu sau khi chọn
     document.getElementById("func-dropdown").classList.remove("active");
 }
 
@@ -766,8 +695,6 @@ function factorial() {
 }
 
 function expFunction() {
-    // Hàm exp trong máy tính thường là nhập số mũ (Scientific Notation)
-    // Ví dụ: 2E3 = 2000. Dùng E hoa để không bị replace nhầm bởi Math.E (e thường)
     appendToDisplay("E");
 }
 
@@ -775,14 +702,11 @@ function toggleFE() {
     isFE = !isFE;
     const btn = document.getElementById("btn-fe");
     
-    // Cập nhật giao diện nút (active state)
     if (isFE) btn.classList.add("active");
     else btn.classList.remove("active");
 
-    // Cập nhật hiển thị ngay lập tức nếu đang có số trên màn hình
     if (display.innerText === "Error") return;
     
-    // Nếu đang là biểu thức (vd: 5+5), tính toán trước để không bị mất dữ liệu
     if (!isFinite(display.innerText)) {
         calculate();
     }
@@ -792,8 +716,6 @@ function toggleFE() {
         if (isFE) {
             display.innerText = val.toExponential();
         } else {
-            // Quay về dạng thường (Fixed)
-            // Xử lý số quá nhỏ bị chuyển thành e- (vd: 1e-7 -> 0.0000001)
             if (Math.abs(val) < 1e-6 && val !== 0) {
                 display.innerText = val.toFixed(20).replace(/\.?0+$/, "");
             } else {
@@ -804,10 +726,10 @@ function toggleFE() {
 }
 
 // --- LOGIC PROGRAMMER MODE ---
+
 function setBase(base) {
     currentBase = base;
     
-    // Update UI active class
     document.querySelectorAll(".radix-row").forEach(el => el.classList.remove("active"));
     if (base === 16) document.getElementById("radix-hex").classList.add("active");
     if (base === 10) document.getElementById("radix-dec").classList.add("active");
@@ -816,20 +738,16 @@ function setBase(base) {
     let rawStr = display.innerText;
     let val = 0n;
     try {
-        // Parse giá trị hiện tại về BigInt
         if (currentBase === 10) val = BigInt(rawStr);
         else {
             let prefix = currentBase === 16 ? "0x" : (currentBase === 8 ? "0o" : "0b");
             val = BigInt(prefix + rawStr);
         }
         
-        // Hiển thị lại theo base mới
         if (base === 10) {
-            // Dec hiển thị Signed
             val = BigInt.asIntN(currentWordSize, val);
             display.innerText = val.toString(10);
         } else {
-            // Hex/Oct/Bin hiển thị Unsigned (Masked)
             val = BigInt.asUintN(currentWordSize, val);
             display.innerText = val.toString(base).toUpperCase();
         }
@@ -845,14 +763,11 @@ function toggleWordSize() {
     
     document.getElementById("btn-word-size").innerText = WORD_LABELS[currentWordSize];
     
-    // Refresh lại hiển thị để áp dụng mask mới
     setBase(currentBase); 
     updateProgrammerDisplay();
 }
 
 function updateProgrammerDisplay() {
-    // Lấy giá trị hiện tại (đang hiển thị ở base nào đó)
-    // Để đơn giản, ta giả sử người dùng nhập ở DEC, hoặc ta parse theo currentBase
     let valStr = display.innerText;
     let val = 0n;
     try {
@@ -870,6 +785,7 @@ function updateProgrammerDisplay() {
 }
 
 // --- LOGIC DATE CALCULATION ---
+
 function calculateDateDiff() {
     const d1 = document.getElementById("date-from").valueAsDate;
     const d2 = document.getElementById("date-to").valueAsDate;
@@ -879,7 +795,6 @@ function calculateDateDiff() {
         const diffTime = Math.abs(d2 - d1);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         
-        // Tính thêm tuần
         const weeks = Math.floor(diffDays / 7);
         const daysLeft = diffDays % 7;
         
@@ -892,6 +807,7 @@ function calculateDateDiff() {
 }
 
 // --- LOGIC GRAPHING (SIMPLE) ---
+
 function drawGraph() {
     const canvas = document.getElementById("graph-canvas");
     if (!canvas) return;
@@ -900,40 +816,27 @@ function drawGraph() {
     const h = canvas.height;
     const funcStr = document.getElementById("graph-func").value;
 
-    // Clear
     ctx.clearRect(0, 0, w, h);
     
-    // Draw Axis
     ctx.beginPath();
     ctx.strokeStyle = "#ccc";
-    ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); // X axis
-    ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); // Y axis
+    ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
+    ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h);
     ctx.stroke();
 
-    // Draw Function
     ctx.beginPath();
     ctx.strokeStyle = "#0067c0";
     ctx.lineWidth = 2;
 
-    // Plotting: x đi từ -w/2 đến w/2
-    // Scale: giả sử 1 đơn vị pixel = 1 đơn vị toán học (hoặc scale nhỏ lại)
-    // Ta dịch gốc tọa độ về giữa (w/2, h/2)
-    
     let started = false;
     for (let px = 0; px < w; px++) {
-        // Chuyển pixel x sang tọa độ toán học x
-        // Giả sử zoom level: 10px = 1 unit -> x_math = (px - w/2) / 10
         let x = (px - w/2) / 10;
         
         try {
-            // Eval hàm số: thay 'x' bằng giá trị, các hàm sin/cos cần Math.
-            // Lưu ý: Đây là eval đơn giản, không an toàn tuyệt đối nhưng đủ cho demo
             let evalStr = funcStr.replace(/x/g, `(${x})`)
                                  .replace(/sin/g, "Math.sin").replace(/cos/g, "Math.cos").replace(/tan/g, "Math.tan");
             let y = eval(evalStr);
             
-            // Chuyển y toán học sang pixel y
-            // y_pixel = h/2 - (y * 10) (Dấu trừ vì trục y canvas hướng xuống)
             let py = h/2 - (y * 10);
 
             if (!started) {
@@ -943,7 +846,6 @@ function drawGraph() {
                 ctx.lineTo(px, py);
             }
         } catch (e) {
-            // Bỏ qua lỗi nếu hàm sai
         }
     }
     ctx.stroke();
@@ -955,7 +857,6 @@ function toggleHistory() {
     const histPanel = document.getElementById("history-panel");
     const memPanel = document.getElementById("memory-panel");
     
-    // Nếu Memory đang mở thì đóng lại
     if (memPanel) memPanel.classList.remove("active");
     
     histPanel.classList.toggle("active");
@@ -965,7 +866,6 @@ function toggleMemory() {
     const histPanel = document.getElementById("history-panel");
     const memPanel = document.getElementById("memory-panel");
     
-    // Nếu History đang mở thì đóng lại
     if (histPanel) histPanel.classList.remove("active");
     
     memPanel.classList.toggle("active");
@@ -976,8 +876,6 @@ function renderMemory() {
     const list = document.getElementById("memory-list");
     if (!list) return;
 
-    // Vì logic hiện tại chỉ lưu 1 biến memory, ta hiển thị nó như 1 item
-    // Tái sử dụng class 'history-item' để có giao diện giống lịch sử
     list.innerHTML = !isMemorySet ? '<p class="empty-msg">There\'s nothing saved in memory</p>' : 
         `<div class="history-item" onclick="memoryRecall()">
             <div class="hist-res" style="text-align: right; font-size: 1.5rem; font-weight: 600;">${memory}</div>
@@ -998,14 +896,13 @@ function addToHistory(expression, result) {
         <div class="hist-res">${result}</div>
     `;
     
-    // Click vào lịch sử để lấy lại giá trị
     item.onclick = function() {
         display.innerText = result;
-        isNewCalculation = true; // Sửa lỗi: Đánh dấu để nhập số mới sẽ reset màn hình
-        toggleHistory(); // Đóng bảng sau khi chọn
+        isNewCalculation = true;
+        toggleHistory();
     };
 
-    historyList.prepend(item); // Thêm vào đầu danh sách
+    historyList.prepend(item);
 }
 
 function clearHistory() {
@@ -1013,35 +910,30 @@ function clearHistory() {
     historyList.innerHTML = '<p class="empty-msg">There\'s no history yet</p>';
 }
 
-// Đóng menu Trigonometry khi click ra ngoài
 window.onclick = function(event) {
-    // Đóng Trig menu
     if (!event.target.matches('#btn-trig-menu') && !event.target.closest('#trig-dropdown')) {
         const d = document.getElementById("trig-dropdown");
         if (d && d.classList.contains('active')) d.classList.remove('active');
     }
-    // Đóng Func menu
     if (!event.target.matches('#btn-func-menu') && !event.target.closest('#func-dropdown')) {
         const d = document.getElementById("func-dropdown");
         if (d && d.classList.contains('active')) d.classList.remove('active');
     }
-    // Logic đóng sidebar cũ
     if (event.target.matches('#overlay')) {
         toggleMenu();
     }
 }
 
 // --- HỖ TRỢ BÀN PHÍM (KEYBOARD SUPPORT) ---
+
 document.addEventListener("keydown", function(event) {
     const key = event.key;
 
-    // Số (0-9)
     if (/[0-9]/.test(key)) {
         appendToDisplay(key);
         return;
     }
 
-    // Các phím chức năng
     switch (key) {
         case "+":
             appendToDisplay("+");
@@ -1053,7 +945,7 @@ document.addEventListener("keydown", function(event) {
             appendToDisplay("×");
             break;
         case "/":
-            event.preventDefault(); // Chặn tính năng tìm kiếm nhanh của Firefox
+            event.preventDefault();
             appendToDisplay("÷");
             break;
         case ".":
@@ -1062,7 +954,7 @@ document.addEventListener("keydown", function(event) {
             break;
         case "Enter":
         case "=":
-            event.preventDefault(); // Chặn hành vi mặc định (như click nút đang focus)
+            event.preventDefault();
             calculate();
             break;
         case "Backspace":

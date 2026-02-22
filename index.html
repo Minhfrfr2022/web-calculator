@@ -47,7 +47,6 @@
             <div class="sci-toolbar" id="sci-toolbar" style="display: none;">
                 <button id="btn-deg" onclick="toggleDegRad()">DEG</button>
                 <button id="btn-fe" onclick="toggleFE()">F-E</button>
-                <!-- Nút mở menu lượng giác -->
                 <button id="btn-trig-menu" onclick="toggleTrigMenu()">Trigonometry ▾</button>
                 <button id="btn-func-menu" onclick="toggleFuncMenu()">Function ▾</button>
             </div>
@@ -76,49 +75,42 @@
             </div>
 
             <div class="buttons-grid scientific-grid" id="mode-scientific" style="display: none;">
-                <!-- Row 1 -->
                 <button class="sci-func" id="btn-2nd" onclick="toggleSecondFunc()">2<sup>nd</sup></button>
                 <button class="sci-func" onclick="appendToDisplay('π')">π</button>
                 <button class="sci-func" onclick="appendToDisplay('𝑒')">e</button>
                 <button onclick="clearDisplay()">C</button>
                 <button onclick="backspace()">⌫</button>
 
-                <!-- Row 2 -->
                 <button class="sci-func" id="btn-square" onclick="calculateSquare()">x²</button>
                 <button class="sci-func" onclick="calculateInverse()">¹/x</button>
                 <button class="sci-func" onclick="appendToDisplay('abs(')">|x|</button>
                 <button class="sci-func" onclick="expFunction()">exp</button>
                 <button class="sci-func" onclick="appendToDisplay('mod')">mod</button>
 
-                <!-- Row 3 -->
                 <button class="sci-func" id="btn-sqrt" onclick="calculateSqrt()">²√x</button>
                 <button class="sci-func" onclick="appendToDisplay('(')">(</button>
                 <button class="sci-func" onclick="appendToDisplay(')')">)</button>
                 <button class="sci-func" onclick="factorial()">n!</button>
                 <button class="operator" onclick="appendToDisplay('÷')">÷</button>
 
-                <!-- Row 4 -->
                 <button class="sci-func" id="btn-power" onclick="appendToDisplay('^')">xʸ</button>
                 <button class="number" onclick="appendToDisplay('7')">7</button>
                 <button class="number" onclick="appendToDisplay('8')">8</button>
                 <button class="number" onclick="appendToDisplay('9')">9</button>
                 <button class="operator" onclick="appendToDisplay('×')">×</button>
 
-                <!-- Row 5 -->
                 <button class="sci-func" id="btn-10x" onclick="appendToDisplay('10^')">10ˣ</button>
                 <button class="number" onclick="appendToDisplay('4')">4</button>
                 <button class="number" onclick="appendToDisplay('5')">5</button>
                 <button class="number" onclick="appendToDisplay('6')">6</button>
                 <button class="operator" onclick="appendToDisplay('-')">−</button>
 
-                <!-- Row 6 -->
                 <button class="sci-func" id="btn-log" onclick="appendToDisplay('log(')">log</button>
                 <button class="number" onclick="appendToDisplay('1')">1</button>
                 <button class="number" onclick="appendToDisplay('2')">2</button>
                 <button class="number" onclick="appendToDisplay('3')">3</button>
                 <button class="operator" onclick="appendToDisplay('+')">+</button>
 
-                <!-- Row 7 -->
                 <button class="sci-func" id="btn-ln" onclick="appendToDisplay('ln(')">ln</button>
                 <button class="number" onclick="toggleSign()">+/-</button>
                 <button class="number" onclick="appendToDisplay('0')">0</button>
@@ -136,7 +128,6 @@
                     <button id="btn-word-size" class="word-size-btn" onclick="toggleWordSize()">QWORD</button>
                 </div>
                 <div class="buttons-grid scientific-grid">
-                    <!-- Row 1: Bitwise & Hex A-F -->
                     <button class="sci-func" onclick="appendToDisplay('A')">A</button>
                     <button class="sci-func" onclick="appendToDisplay('<<')">Lsh</button>
                     <button class="sci-func" onclick="appendToDisplay('>>')">Rsh</button>
