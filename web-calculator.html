@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="calculator" id="calculator">
+        <div class="header">
+            <div class="left-controls">
+                <button class="icon-btn menu-btn" onclick="toggleMenu()">☰</button>
+                <span class="mode-title" id="mode-title">Standard</span>
+            </div>
+
+            <button class="icon-btn history-btn" onclick="toggleHistory()" title="History">
+                🕒
+            </button>
+        </div>
+
+        <!-- Sidebar Menu & Overlay -->
+        <div id="overlay" onclick="toggleMenu()"></div>
+        <div id="sidebar">
+            <div class="menu-item active" onclick="switchMode('standard', this)">Standard</div>
+            <div class="menu-item" onclick="switchMode('scientific', this)">Scientific</div>
+            <div class="menu-item" onclick="switchMode('graphing', this)">Graphing</div>
+            <div class="menu-item" onclick="switchMode('programmer', this)">Programmer</div>
+            <div class="menu-item" onclick="switchMode('date', this)">Date Calculation</div>
+        </div>
+
+        <div class="display-container">
+            <div class="expression" id="expression"></div> <div class="current-value" id="display">0</div> </div>
+
+        <div class="memory-row">
+            <button id="btn-mc" onclick="memoryClear()" disabled>MC</button>
+            <button id="btn-mr" onclick="memoryRecall()" disabled>MR</button>
+            <button onclick="memoryAdd()">M+</button>
+            <button onclick="memorySubtract()">M-</button>
+            <button onclick="memoryStore()">MS</button>
+            <button id="btn-mem-dropdown" onclick="toggleMemory()" disabled>M▼</button>
+        </div>
+
+        <div class="body-area">
+            <!-- Scientific Mode -->
+            <div class="sci-toolbar" id="sci-toolbar" style="display: none;">
+                <button id="btn-deg" onclick="toggleDegRad()">DEG</button>
+                <button id="btn-fe" onclick="toggleFE()">F-E</button>
+                <!-- Nút mở menu lượng giác -->
+                <button id="btn-trig-menu" onclick="toggleTrigMenu()">Trigonometry ▾</button>
+                <button id="btn-func-menu" onclick="toggleFuncMenu()">Function ▾</button>
+            </div>
+
+            <!-- Menu thả xuống cho Trigonometry -->
+            <div id="trig-dropdown" class="trig-dropdown">
+                <button class="trig-item" id="btn-trig-2nd" onclick="toggleSecondFunc()">2<sup>nd</sup></button>
+                <button class="trig-item" id="btn-sin" onclick="trigFunc('sin')">sin</button>
+                <button class="trig-item" id="btn-cos" onclick="trigFunc('cos')">cos</button>
+                <button class="trig-item" id="btn-tan" onclick="trigFunc('tan')">tan</button>
+                
+                <button class="trig-item" id="btn-hyp" onclick="toggleHyp()">hyp</button>
+                <button class="trig-item" id="btn-csc" onclick="trigFunc('csc')">csc</button>
+                <button class="trig-item" id="btn-sec" onclick="trigFunc('sec')">sec</button>
+                <button class="trig-item" id="btn-cot" onclick="trigFunc('cot')">cot</button>
+            </div>
+
+            <!-- Menu thả xuống cho Function -->
+            <div id="func-dropdown" class="trig-dropdown">
+                <button class="trig-item" onclick="mathFunc('abs')">|x|</button>
+                <button class="trig-item" onclick="mathFunc('floor')">⌊x⌋</button>
+                <button class="trig-item" onclick="mathFunc('ceil')">⌈x⌉</button>
+                <button class="trig-item" onclick="mathFunc('rand')">rand</button>
+                <button class="trig-item" onclick="mathFunc('dms')">→dms</button>
+                <button class="trig-item" onclick="mathFunc('deg')">→deg</button>
+            </div>
+
+            <div class="buttons-grid scientific-grid" id="mode-scientific" style="display: none;">
+                <!-- Row 1 -->
+                <button class="sci-func" id="btn-2nd" onclick="toggleSecondFunc()">2<sup>nd</sup></button>
+                <button class="sci-func" onclick="appendToDisplay('π')">π</button>
+                <button class="sci-func" onclick="appendToDisplay('𝑒')">e</button>
+                <button onclick="clearDisplay()">C</button>
+                <button onclick="backspace()">⌫</button>
+
+                <!-- Row 2 -->
+                <button class="sci-func" id="btn-square" onclick="calculateSquare()">x²</button>
+                <button class="sci-func" onclick="calculateInverse()">¹/x</button>
+                <button class="sci-func" onclick="appendToDisplay('abs(')">|x|</button>
+                <button class="sci-func" onclick="expFunction()">exp</button>
+                <button class="sci-func" onclick="appendToDisplay('mod')">mod</button>
+
+                <!-- Row 3 -->
+                <button class="sci-func" id="btn-sqrt" onclick="calculateSqrt()">²√x</button>
+                <button class="sci-func" onclick="appendToDisplay('(')">(</button>
+                <button class="sci-func" onclick="appendToDisplay(')')">)</button>
+                <button class="sci-func" onclick="factorial()">n!</button>
+                <button class="operator" onclick="appendToDisplay('÷')">÷</button>
+
+                <!-- Row 4 -->
+                <button class="sci-func" id="btn-power" onclick="appendToDisplay('^')">xʸ</button>
+                <button class="number" onclick="appendToDisplay('7')">7</button>
+                <button class="number" onclick="appendToDisplay('8')">8</button>
+                <button class="number" onclick="appendToDisplay('9')">9</button>
+                <button class="operator" onclick="appendToDisplay('×')">×</button>
+
+                <!-- Row 5 -->
+                <button class="sci-func" id="btn-10x" onclick="appendToDisplay('10^')">10ˣ</button>
+                <button class="number" onclick="appendToDisplay('4')">4</button>
+                <button class="number" onclick="appendToDisplay('5')">5</button>
+                <button class="number" onclick="appendToDisplay('6')">6</button>
+                <button class="operator" onclick="appendToDisplay('-')">−</button>
+
+                <!-- Row 6 -->
+                <button class="sci-func" id="btn-log" onclick="appendToDisplay('log(')">log</button>
+                <button class="number" onclick="appendToDisplay('1')">1</button>
+                <button class="number" onclick="appendToDisplay('2')">2</button>
+                <button class="number" onclick="appendToDisplay('3')">3</button>
+                <button class="operator" onclick="appendToDisplay('+')">+</button>
+
+                <!-- Row 7 -->
+                <button class="sci-func" id="btn-ln" onclick="appendToDisplay('ln(')">ln</button>
+                <button class="number" onclick="toggleSign()">+/-</button>
+                <button class="number" onclick="appendToDisplay('0')">0</button>
+                <button class="number" onclick="appendToDisplay('.')">.</button>
+                <button class="equals" onclick="calculate()">=</button>
+            </div>
+
+            <!-- Programmer Mode -->
+            <div id="mode-programmer" style="display: none;">
+                <div class="programmer-display">
+                    <div class="radix-row" id="radix-hex" onclick="setBase(16)"><span class="radix-label">HEX</span><span class="radix-value" id="val-hex">0</span></div>
+                    <div class="radix-row active" id="radix-dec" onclick="setBase(10)"><span class="radix-label">DEC</span><span class="radix-value" id="val-dec">0</span></div>
+                    <div class="radix-row" id="radix-oct" onclick="setBase(8)"><span class="radix-label">OCT</span><span class="radix-value" id="val-oct">0</span></div>
+                    <div class="radix-row" id="radix-bin" onclick="setBase(2)"><span class="radix-label">BIN</span><span class="radix-value" id="val-bin">0</span></div>
+                    <button id="btn-word-size" class="word-size-btn" onclick="toggleWordSize()">QWORD</button>
+                </div>
+                <div class="buttons-grid scientific-grid">
+                    <!-- Row 1: Bitwise & Hex A-F -->
+                    <button class="sci-func" onclick="appendToDisplay('A')">A</button>
+                    <button class="sci-func" onclick="appendToDisplay('<<')">Lsh</button>
+                    <button class="sci-func" onclick="appendToDisplay('>>')">Rsh</button>
+                    <button onclick="clearDisplay()">C</button>
+                    <button onclick="backspace()">⌫</button>
+
+                    <button class="sci-func" onclick="appendToDisplay('B')">B</button>
+                    <button class="sci-func" onclick="appendToDisplay('(')">(</button>
+                    <button class="sci-func" onclick="appendToDisplay(')')">)</button>
+                    <button class="sci-func" onclick="appendToDisplay('%')">Mod</button>
+                    <button class="operator" onclick="appendToDisplay('÷')">÷</button>
+
+                    <button class="sci-func" onclick="appendToDisplay('C')">C</button>
+                    <button class="number" onclick="appendToDisplay('7')">7</button>
+                    <button class="number" onclick="appendToDisplay('8')">8</button>
+                    <button class="number" onclick="appendToDisplay('9')">9</button>
+                    <button class="operator" onclick="appendToDisplay('×')">×</button>
+
+                    <button class="sci-func" onclick="appendToDisplay('D')">D</button>
+                    <button class="number" onclick="appendToDisplay('4')">4</button>
+                    <button class="number" onclick="appendToDisplay('5')">5</button>
+                    <button class="number" onclick="appendToDisplay('6')">6</button>
+                    <button class="operator" onclick="appendToDisplay('-')">−</button>
+
+                    <button class="sci-func" onclick="appendToDisplay('E')">E</button>
+                    <button class="number" onclick="appendToDisplay('1')">1</button>
+                    <button class="number" onclick="appendToDisplay('2')">2</button>
+                    <button class="number" onclick="appendToDisplay('3')">3</button>
+                    <button class="operator" onclick="appendToDisplay('+')">+</button>
+
+                    <button class="sci-func" onclick="appendToDisplay('F')">F</button>
+                    <button class="number" onclick="toggleSign()">+/-</button>
+                    <button class="number" onclick="appendToDisplay('0')">0</button>
+                    <button class="number" onclick="appendToDisplay('.')">.</button>
+                    <button class="equals" onclick="calculate()">=</button>
+                </div>
+            </div>
+
+            <!-- Date Calculation Mode -->
+            <div class="date-container" id="mode-date" style="display: none;">
+                <div class="date-group">
+                    <label>From</label>
+                    <input type="date" id="date-from" class="date-input" onchange="calculateDateDiff()">
+                </div>
+                <div class="date-group">
+                    <label>To</label>
+                    <input type="date" id="date-to" class="date-input" onchange="calculateDateDiff()">
+                </div>
+                <div class="date-result" id="date-result"></div>
+            </div>
+
+            <!-- Graphing Mode -->
+            <div class="graphing-container" id="mode-graphing" style="display: none;">
+                <canvas id="graph-canvas" width="480" height="300"></canvas>
+                <div class="graph-controls">
+                    <input type="text" id="graph-func" class="graph-input" placeholder="Enter function (e.g., sin(x) * 10)" value="sin(x/10)*50">
+                    <button class="equals" style="width: 60px;" onclick="drawGraph()">Plot</button>
+                </div>
+                <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">* Simple plotter: Use 'x' as variable. Try: x*x/10 or sin(x)*20</p>
+            </div>
+
+            <div class="memory-panel" id="memory-panel">
+                <div class="memory-list" id="memory-list">
+                    <p class="empty-msg">There's nothing saved in memory</p>
+                </div>
+                <div class="history-footer">
+                    <button class="trash-btn" onclick="memoryClear()">🗑️</button>
+                </div>
+            </div>
+            <div class="history-panel" id="history-panel">
+                <div class="history-list" id="history-list">
+                    <p class="empty-msg">There's no history yet</p>
+                </div>
+                <div class="history-footer">
+                    <button class="trash-btn" onclick="clearHistory()">🗑️</button>
+                </div>
+            </div>
+
+            <!-- Standard Mode -->
+            <div class="buttons-grid standard-grid" id="mode-standard">
+                <button onclick="appendToDisplay('%')">%</button>
+                <button onclick="clearEntry()">CE</button>
+                <button onclick="clearDisplay()">C</button>
+                <button onclick="backspace()">⌫</button>
+
+                <button onclick="calculateInverse()">¹/x</button>
+                <button onclick="calculateSquare()">x²</button>
+                <button onclick="calculateSqrt()">²√x</button>
+                <button class="operator" onclick="appendToDisplay('÷')">÷</button>
+
+                <button class="number" onclick="appendToDisplay('7')">7</button>
+                <button class="number" onclick="appendToDisplay('8')">8</button>
+                <button class="number" onclick="appendToDisplay('9')">9</button>
+                <button class="operator" onclick="appendToDisplay('×')">×</button>
+
+                <button class="number" onclick="appendToDisplay('4')">4</button>
+                <button class="number" onclick="appendToDisplay('5')">5</button>
+                <button class="number" onclick="appendToDisplay('6')">6</button>
+                <button class="operator" onclick="appendToDisplay('-')">−</button>
+
+                <button class="number" onclick="appendToDisplay('1')">1</button>
+                <button class="number" onclick="appendToDisplay('2')">2</button>
+                <button class="number" onclick="appendToDisplay('3')">3</button>
+                <button class="operator" onclick="appendToDisplay('+')">+</button>
+
+                <button onclick="toggleSign()">+/-</button>
+                <button class="number" onclick="appendToDisplay('0')">0</button>
+                <button class="number" onclick="appendToDisplay('.')">.</button>
+                <button class="equals" onclick="calculate()">=</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
