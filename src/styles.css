@@ -1,0 +1,152 @@
+/**
+ * ==========================================================
+ * 1. THIẾT LẬP CHUNG (GLOBAL STYLES)
+ * ==========================================================
+ */
+* { box-sizing: border-box; } /* Đảm bảo padding không làm tăng kích thước phần tử */
+
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center; /* Căn giữa máy tính theo chiều ngang */
+    align-items: center;     /* Căn giữa máy tính theo chiều dọc */
+    background-color: #e0e3e5;
+    margin: 0;
+    font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif; /* Font đặc trưng Windows 11 */
+    user-select: none;       /* Ngăn người dùng bôi đen văn bản trên máy tính */
+}
+
+/* Khung chính của máy tính */
+.calculator {
+    width: 380px;
+    height: 600px;
+    background-color: #f3f3f3;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* Tạo hiệu ứng đổ bóng nổi khối */
+    border: 1px solid #d1d1d1;
+    display: flex;
+    flex-direction: column;  /* Xếp Header, Display và Buttons theo cột */
+    overflow: hidden;        /* Cắt bỏ các phần thừa ra ngoài border-radius */
+    position: relative;
+}
+
+/**
+ * ==========================================================
+ * 2. KHU VỰC HIỂN THỊ (DISPLAY SECTIONS)
+ * ==========================================================
+ */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+}
+
+.display-container {
+    padding: 0 20px 10px 20px;
+    text-align: right;       /* Số luôn căn lề phải theo chuẩn máy tính */
+    flex-shrink: 0;          /* Không cho phép vùng hiển thị bị co lại khi thiếu không gian */
+}
+
+.expression {
+    height: 24px;
+    color: #666;             /* Màu nhạt hơn cho biểu thức phụ */
+    font-size: 0.9rem;
+}
+
+.current-value {
+    font-size: 3.5rem;
+    font-weight: 600;
+    white-space: nowrap;     /* Không cho phép xuống dòng khi số quá dài */
+    overflow-x: auto;        /* Hiện thanh cuộn ngang nếu số vượt màn hình */
+}
+
+/**
+ * ==========================================================
+ * 3. HỆ THỐNG NÚT BẤM (BUTTON SYSTEM)
+ * ==========================================================
+ */
+.buttons-grid {
+    display: grid;           /* Sử dụng CSS Grid để chia cột/hàng cực nhanh */
+    grid-template-columns: repeat(4, 1fr); /* Mặc định 4 cột đều nhau */
+    gap: 2px;
+    flex: 1;                 /* Tự động chiếm toàn bộ phần còn lại của body-area */
+}
+
+.buttons-grid button {
+    border: 1px solid transparent;
+    background-color: #f9f9f9;
+    transition: all 0.1s;    /* Tạo hiệu ứng mượt khi di chuột (hover) */
+}
+
+/* Phân loại màu sắc cho nút */
+.buttons-grid button.number { background-color: #ffffff; } /* Số màu trắng */
+.buttons-grid button.equals { 
+    background-color: #0067c0; /* Nút bằng màu xanh Windows đặc trưng */
+    color: white; 
+}
+
+/**
+ * ==========================================================
+ * 4. HIỆU ỨNG TRƯỢT PANEL (HISTORY & MEMORY)
+ * ==========================================================
+ */
+.history-panel, .memory-panel {
+    position: absolute;
+    top: 100%;               /* Ban đầu đẩy panel xuống dưới cùng (ẩn đi) */
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    transition: top 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); /* Hiệu ứng trượt mượt mà */
+}
+
+/* Khi panel có class 'active', nó sẽ trượt lên chiếm toàn màn hình */
+.history-panel.active, .memory-panel.active {
+    top: 0;
+}
+
+/**
+ * ==========================================================
+ * 5. CHẾ ĐỘ NÂNG CAO (SCIENTIFIC & PROGRAMMER)
+ * ==========================================================
+ */
+
+/* Tăng số cột lên 5 cho chế độ Khoa học */
+.scientific-grid {
+    grid-template-columns: repeat(5, 1fr); 
+    grid-template-rows: repeat(7, 1fr);
+}
+
+/* Chế độ Programmer: Kiểu chữ Consolas giúp các số nhị phân thẳng hàng */
+.programmer-display {
+    font-family: 'Consolas', monospace;
+}
+
+/* Hiệu ứng thanh xanh bên trái khi chọn hệ cơ số (HEX, DEC...) */
+.radix-row.active { 
+    border-left: 3px solid #0067c0;
+}
+
+/**
+ * ==========================================================
+ * 6. MENU ĐIỀU HƯỚNG (SIDEBAR)
+ * ==========================================================
+ */
+#sidebar {
+    position: absolute;
+    transform: translateX(-100%); /* Ẩn menu sang bên trái màn hình */
+    transition: transform 0.2s ease;
+    z-index: 30;
+}
+
+#sidebar.open { 
+    transform: translateX(0);    /* Trượt menu ra khi người dùng bấm phím ☰ */
+}
+
+/* Overlay: Lớp phủ mờ nền khi mở sidebar */
+#overlay {
+    background: rgba(0,0,0,0.4);
+    display: none;
+}
+#overlay.active { display: block; }

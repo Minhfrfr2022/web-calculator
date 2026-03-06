@@ -1,0 +1,32 @@
+{
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "parcel": "^2.16.4",
+    "typescript": "^5.9.3"
+  },
+  "name": "calculator",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "csstype": "^3.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "scripts": {
+  "start": "parcel index.html",
+  "build": "parcel build index.html"
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Minhfrfr2022/web-calculator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Minhfrfr2022/web-calculator/issues"
+  },
+  "homepage": "https://github.com/Minhfrfr2022/web-calculator#readme"
+}
